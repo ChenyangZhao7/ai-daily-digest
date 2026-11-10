@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>量子位</title>
+    <item>
+      <title>新架构把长上下文成本降了一半</title>
+      <link>https://www.qbitai.com/2026/11/1.html</link>
+      <description><![CDATA[<p>摘要一 &amp; 细节</p>]]></description>
+      <pubDate>Sun, 09 Nov 2026 20:00:00 +0800</pubDate>
+    </item>
+    <item>
+      <title>Agent 框架开始支持工具记忆</title>
+      <link>https://www.qbitai.com/2026/11/2.html</link>
+      <description><![CDATA[<p>摘要二</p>]]></description>
+      <pubDate>Sun, 09 Nov 2026 18:30:00 +0800</pubDate>
+    </item>
+  </channel>
+</rss>

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import feedparser  # noqa: E402
 import html
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
@@ -107,6 +108,40 @@ def parse_arxiv(xml_text: str) -> list[Item]:
                 summary=_clean(_text(entry, f"{ATOM}summary")),
                 published=published,
                 meta=meta,
+            )
+        )
+    return items
+
+
+def parse_rss(
+    name: str, xml_text: str, keywords: list[str] | None = None
+) -> list[Item]:
+    feed = feedparser.parse(xml_text)
+    needles = [k.lower() for k in (keywords or [])]
+    items: list[Item] = []
+    for entry in feed.entries:
+        title = _clean(str(entry.get("title") or ""))
+        link = str(entry.get("link") or "").strip()
+        if not title or not link:
+            continue
+        struct = entry.get("published_parsed") or entry.get("updated_parsed")
+        if not struct:
+            continue
+        published = to_utc(datetime(*struct[:6], tzinfo=timezone.utc))
+        summary = _clean(str(entry.get("summary") or entry.get("description") or ""))
+        if needles:
+            haystack = f"{title} {summary}".lower()
+            if not any(needle in haystack for needle in needles):
+                continue
+        items.append(
+            Item(
+                id=make_id(link),
+                title=title,
+                url=link,
+                source=name,
+                kind="news",
+                summary=summary,
+                published=published,
             )
         )
     return items
