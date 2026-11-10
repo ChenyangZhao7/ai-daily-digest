@@ -14,6 +14,10 @@ from .sources import fetch_all
 from .summarize import score_items
 
 
+def _score_of(scores: dict[str, dict], item: Item, fallback: int) -> int:
+    return (scores.get(item.id) or {"score": fallback})["score"]
+
+
 def _pick(
     items: list[Item],
     scores: dict[str, dict] | None,
@@ -31,17 +35,21 @@ def _pick(
         group.sort(key=lambda i: i.published, reverse=True)
         return group[:max_n]
 
-    primary: list[Item] = []
-    relaxed: list[Item] = []
-    for item in group:
-        info = scores.get(item.id) or {"score": relax_score, "blurb": ""}
-        (primary if info["score"] >= threshold else relaxed).append(item)
+    primary = [i for i in group if _score_of(scores, i, relax_score) >= threshold]
+    relaxed = [
+        i for i in group if _score_of(scores, i, relax_score) == relax_score
+    ]
+    order = lambda i: (  # noqa: E731
+        -_score_of(scores, i, relax_score),
+        -i.published.timestamp(),
+    )
+    primary.sort(key=order)
+    relaxed.sort(key=order)
 
-    primary.sort(key=lambda i: i.published, reverse=True)
-    relaxed.sort(key=lambda i: i.published, reverse=True)
     chosen = primary[:max_n]
     if len(chosen) < relax_min:
         chosen.extend(relaxed[: relax_min - len(chosen)])
+        chosen.sort(key=order)
     return chosen[:max_n]
 
 
@@ -69,21 +77,41 @@ def run(
     now = now or datetime.now(timezone.utc)
 
     items, errors = fetch_fn(cfg, now)
+    for err in errors:
+        print(f"[warn] source failed: {err}", file=sys.stderr)
+
+    if send_fn is None:
+        raise RuntimeError("send_fn is required")
+
     if not items:
-        if send_fn is None:
-            raise RuntimeError("no items and no send_fn")
-        send_fn("[AI 日报] 今日抓取失败（全部来源）", _alert_html(errors))
+        try:
+            send_fn("[AI 日报] 今日抓取失败（全部来源）", _alert_html(errors))
+        except Exception as exc:  # noqa: BLE001
+            print(f"send failed: {exc}", file=sys.stderr)
+            return 1
         return 0
 
     items = select_candidates(dedupe(items), cfg, now)
     api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+    if not api_key:
+        print("[warn] DEEPSEEK_API_KEY is empty; sending without summaries", file=sys.stderr)
     scores = score_fn(items, cfg, api_key) or None
+    print(
+        f"[info] candidates={len(items)} scored={len(scores or {})} "
+        f"source_errors={len(errors)}",
+        file=sys.stderr,
+    )
 
     selected = _pick(items, scores, "paper", cfg) + _pick(items, scores, "news", cfg)
-    subject, body = render_email(selected, scores, cfg, now)
+    if not selected:
+        print("[warn] nothing met the score bar; sending plain list", file=sys.stderr)
+        scores = None
+        limits = cfg["limits"]
+        selected = sorted(items, key=lambda i: i.published, reverse=True)[
+            : limits["max_papers"] + limits["max_news"]
+        ]
 
-    if send_fn is None:
-        raise RuntimeError("no send_fn")
+    subject, body = render_email(selected, scores, cfg, now)
     try:
         send_fn(subject, body)
     except Exception as exc:  # noqa: BLE001

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 
 import requests
 
@@ -45,11 +46,18 @@ def parse_llm_response(text: str, valid_ids: set[str]) -> dict[str, dict]:
     cleaned = text.replace("```json", "").replace("```", "")
     start, end = cleaned.find("["), cleaned.rfind("]")
     if start == -1 or end == -1 or end < start:
-        return {}
-    try:
-        data = json.loads(cleaned[start : end + 1])
-    except json.JSONDecodeError:
-        return {}
+        try:
+            obj = json.loads(cleaned.strip())
+        except json.JSONDecodeError:
+            return {}
+        data = obj.get("items") if isinstance(obj, dict) else None
+        if not isinstance(data, list):
+            return {}
+    else:
+        try:
+            data = json.loads(cleaned[start : end + 1])
+        except json.JSONDecodeError:
+            return {}
     if not isinstance(data, list):
         return {}
     out: dict[str, dict] = {}
@@ -77,24 +85,32 @@ def score_items(
         return {}
     client = session or requests.Session()
     llm = cfg["llm"]
-    try:
-        resp = client.post(
-            f"{llm['base_url']}/chat/completions",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": llm["model"],
-                "messages": build_messages(items),
-                "temperature": 0.3,
-                "max_tokens": 2000,
-                "response_format": {"type": "json_object"},
-            },
-            timeout=llm.get("timeout", 30),
-        )
-        resp.raise_for_status()
-        content = resp.json()["choices"][0]["message"]["content"]
-    except Exception:  # noqa: BLE001
+    content = None
+    for attempt in range(2):
+        try:
+            resp = client.post(
+                f"{llm['base_url']}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": llm["model"],
+                    "messages": build_messages(items),
+                    "temperature": 0.3,
+                    "max_tokens": 4000,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=llm.get("timeout", 30),
+            )
+            resp.raise_for_status()
+            content = resp.json()["choices"][0]["message"]["content"]
+            break
+        except Exception:  # noqa: BLE001
+            if attempt == 0:
+                time.sleep(1)
+            else:
+                return {}
+    if content is None:
         return {}
     return parse_llm_response(content, {item.id for item in items})

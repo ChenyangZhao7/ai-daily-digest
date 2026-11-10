@@ -60,6 +60,15 @@ def render_email(
     sources = "、".join(sorted({i.source for i in items})) or "-"
     generated = local.strftime("%Y-%m-%d %H:%M")
 
+    top = next(
+        (i for i in items if (scores or {}).get(i.id, {}).get("score") == 5),
+        None,
+    )
+    top_blurb = ((scores or {}).get(top.id, {}).get("blurb", "") if top else "") or ""
+    overview = f"今日 {len(papers)} 篇论文、{len(news)} 条资讯"
+    if top_blurb:
+        overview += f"，重点：{top_blurb}"
+
     body = (
         '<html><body style="margin:0;padding:0;background:#f6f6f6;">'
         '<table width="600" cellpadding="0" cellspacing="0" border="0" '
@@ -67,6 +76,8 @@ def render_email(
         "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;\">"
         '<tr><td style="padding:24px 24px 6px 24px;">'
         f'<div style="font-size:20px;font-weight:700;">AI 日报 · {date_label}</div>'
+        '<div style="color:#555;font-size:13px;margin-top:6px;">'
+        f"{_esc(overview)}</div>"
         "</td></tr>"
         '<tr><td style="padding:6px 24px 24px 24px;">'
         '<h3 style="font-size:15px;margin:18px 0 10px 0;color:#111;">论文</h3>'

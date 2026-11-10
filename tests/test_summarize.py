@@ -28,6 +28,41 @@ def test_parse_ignores_unknown_ids_and_clamps_score():
     assert "zzz" not in out and out["b"]["score"] == 5
 
 
+def test_parse_accepts_dict_wrapped_items():
+    text = '{"overview":"今天重点","items":[{"id":"a","score":5,"blurb":"x"}]}'
+    assert parse_llm_response(text, IDS)["a"]["score"] == 5
+
+
+class _Resp:
+    def __init__(self, content):
+        self._content = content
+
+    def raise_for_status(self):
+        return None
+
+    def json(self):
+        return {"choices": [{"message": {"content": self._content}}]}
+
+
+def test_score_items_retries_once_after_transient_error(monkeypatch):
+    import src.summarize as summarize
+
+    monkeypatch.setattr(summarize.time, "sleep", lambda *_: None)
+    calls = []
+
+    class Flaky:
+        def post(self, *a, **k):
+            calls.append(1)
+            if len(calls) == 1:
+                raise RuntimeError("502")
+            return _Resp('[{"id":"a","score":5,"blurb":"x"}]')
+
+    item = Item(id="a", title="T", url="https://a.com", source="arxiv", kind="paper",
+                summary="s", published=NOW)
+    assert score_items([item], CFG, "key", session=Flaky())["a"]["score"] == 5
+    assert len(calls) == 2
+
+
 def test_build_messages_truncates_summary_and_requires_json():
     item = Item(id="a", title="T", url="https://a.com", source="arxiv", kind="paper",
                 summary="x" * 1000, published=NOW)

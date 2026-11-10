@@ -53,3 +53,10 @@ def test_subject_uses_beijing_date_across_utc_midnight():
     utc_before_midnight = datetime(2026, 11, 9, 17, 0, tzinfo=timezone.utc)
     subject, _ = render_email([_paper()], None, CFG, utc_before_midnight)
     assert "11-10" in subject
+
+
+def test_body_has_one_line_overview():
+    item = _paper()
+    scores = {item.id: {"score": 5, "blurb": "稀疏注意力降本"}}
+    _, html = render_email([item], scores, CFG, NOW)
+    assert "今日 1 篇论文" in html and "重点" in html

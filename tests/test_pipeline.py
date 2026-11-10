@@ -63,3 +63,59 @@ def test_selection_respects_max_limits():
         score_fn=lambda items, cfg, key: {_paper(i).id: {"score": 5, "blurb": "x"} for i in range(10)},
         send_fn=send)
     assert captured["html"].count('class="item"') == 6
+
+
+def _paper_at(i, hours_ago):
+    url = f"https://a.com/{i}"
+    return Item(id=make_id(url), title=f"p{i}", url=url, source="arxiv", kind="paper",
+                summary="s", published=NOW - timedelta(hours=hours_ago))
+
+
+def test_relaxation_adds_only_score_three():
+    items = [_paper_at(0, 1), _paper_at(1, 2), _paper_at(2, 3), _paper_at(3, 0)]
+    scores = {
+        items[0].id: {"score": 5, "blurb": "x"},
+        items[1].id: {"score": 4, "blurb": "x"},
+        items[2].id: {"score": 3, "blurb": "x"},
+        items[3].id: {"score": 1, "blurb": "x"},
+    }
+    captured = {}
+    run(CFG, NOW, fetch_fn=lambda cfg, now: (items, []),
+        score_fn=lambda i, c, k: scores, send_fn=lambda s, h: captured.setdefault("html", h))
+    assert "p2" in captured["html"]
+    assert "p3" not in captured["html"]
+
+
+def test_primary_orders_by_score_then_recency():
+    high_old = _paper_at(0, 10)
+    low_new = _paper_at(1, 1)
+    cfg = dict(CFG)
+    cfg["limits"] = dict(CFG["limits"], max_papers=1)
+    scores = {high_old.id: {"score": 5, "blurb": "x"}, low_new.id: {"score": 4, "blurb": "x"}}
+    captured = {}
+    run(cfg, NOW, fetch_fn=lambda c, now: ([high_old, low_new], []),
+        score_fn=lambda i, c, k: scores, send_fn=lambda s, h: captured.setdefault("html", h))
+    assert "p0" in captured["html"] and "p1" not in captured["html"]
+
+
+def test_nothing_qualifies_falls_back_to_plain_list():
+    items = [_paper_at(0, 1), _paper_at(1, 2)]
+    scores = {i.id: {"score": 2, "blurb": "x"} for i in items}
+    sent = []
+    run(CFG, NOW, fetch_fn=lambda c, now: (items, []),
+        score_fn=lambda i, c, k: scores, send_fn=lambda s, h: sent.append(s))
+    assert "未生成摘要" in sent[0]
+
+
+def test_partial_failure_is_logged_to_stderr(capsys):
+    run(CFG, NOW, fetch_fn=lambda c, now: ([_paper(1)], ["hf: 502"]),
+        score_fn=lambda i, c, k: {}, send_fn=lambda s, h: None)
+    assert "hf: 502" in capsys.readouterr().err
+
+
+def test_alert_send_failure_returns_one():
+    def boom(subject, html):
+        raise RuntimeError("smtp down")
+    code = run(CFG, NOW, fetch_fn=lambda c, now: ([], ["arxiv: timeout"]),
+               score_fn=lambda i, c, k: {}, send_fn=boom)
+    assert code == 1
