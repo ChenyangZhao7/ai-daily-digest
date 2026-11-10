@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:arxiv="http://arxiv.org/schemas/atom">
+  <title>ArXiv Query</title>
+  <entry>
+    <id>http://arxiv.org/abs/2511.00001v1</id>
+    <published>2026-11-09T17:03:00Z</published>
+    <title>Scaling
+  Laws for
+  Sparse Attention</title>
+    <summary>We study A &amp; B, with &lt;3 layers.
+  Results improve.</summary>
+    <arxiv:primary_category term="cs.LG"/>
+    <category term="cs.LG"/>
+    <category term="cs.AI"/>
+    <author><name>Alice</name></author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2511.00002v1</id>
+    <published>2026-11-09T15:00:00Z</published>
+    <title>Agent Memory Revisited</title>
+    <summary>A short abstract.</summary>
+    <category term="cs.CL"/>
+  </entry>
+</feed>
