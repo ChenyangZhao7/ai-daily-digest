@@ -1,0 +1,26 @@
+[
+  {
+    "paper": {
+      "id": "2511.00001",
+      "title": "Agentic KV Cache Compression",
+      "summary": "We compress the KV cache for long-context agents.",
+      "upvotes": 120,
+      "publishedAt": "2026-11-09T12:00:00.000Z",
+      "authors": [{"name": "Alice"}]
+    },
+    "publishedAt": "2026-11-09T12:00:00.000Z",
+    "title": "Agentic KV Cache Compression",
+    "numComments": 9
+  },
+  {
+    "paper": {
+      "id": "2511.00002",
+      "title": "Tool Use at Scale",
+      "summary": "Scaling tool-use agents.",
+      "upvotes": 45,
+      "publishedAt": "2026-11-09T09:30:00.000Z"
+    },
+    "publishedAt": "2026-11-09T09:30:00.000Z",
+    "title": "Tool Use at Scale"
+  }
+]

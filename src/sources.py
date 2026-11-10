@@ -42,6 +42,43 @@ def build_arxiv_url(
     return "https://export.arxiv.org/api/query?" + urlencode(params)
 
 
+def _parse_iso(value: str) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return to_utc(datetime.fromisoformat(value.replace("Z", "+00:00")))
+    except ValueError:
+        return None
+
+
+def parse_hf(payload: list[dict]) -> list[Item]:
+    items: list[Item] = []
+    for entry in payload:
+        paper = entry.get("paper") or {}
+        paper_id = str(paper.get("id") or "").strip()
+        title = _clean(str(paper.get("title") or entry.get("title") or ""))
+        if not paper_id or not title:
+            continue
+        published = _parse_iso(str(entry.get("publishedAt") or paper.get("publishedAt") or ""))
+        if published is None:
+            continue
+        upvotes = paper.get("upvotes")
+        url = f"https://huggingface.co/papers/{paper_id}"
+        items.append(
+            Item(
+                id=make_id(url),
+                title=title,
+                url=url,
+                source="hf",
+                kind="paper",
+                summary=_clean(str(paper.get("summary") or "")),
+                published=published,
+                meta=f"{upvotes if upvotes is not None else 0} upvotes",
+            )
+        )
+    return items
+
+
 def parse_arxiv(xml_text: str) -> list[Item]:
     root = ET.fromstring(xml_text)
     items: list[Item] = []
