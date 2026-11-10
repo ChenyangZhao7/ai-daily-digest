@@ -1,10 +1,10 @@
-import smtplib
+﻿import smtplib
 
 import pytest
 
 from src.mailer import send_email
 
-CFG = {"email": {"to": "your-email@example.com", "from": "your-email@example.com",
+CFG = {"email": {"to": "someone@example.com", "from": "someone@example.com",
                  "smtp_host": "smtp.qq.com", "smtp_port": 465}}
 
 
@@ -36,9 +36,9 @@ def test_send_email_uses_ssl_qq_and_same_from_to(monkeypatch):
     send_email("主题", "<p>hi</p>", CFG, "authcode")
     s = FakeSMTP.instances[0]
     assert (s.host, s.port) == ("smtp.qq.com", 465)
-    assert s.logged_in == ("your-email@example.com", "authcode")
-    assert s.sent["From"] == "your-email@example.com"
-    assert s.sent["To"] == "your-email@example.com"
+    assert s.logged_in == ("someone@example.com", "authcode")
+    assert s.sent["From"] == "someone@example.com"
+    assert s.sent["To"] == "someone@example.com"
 
 
 def test_send_email_raises_when_login_fails(monkeypatch):
@@ -49,3 +49,10 @@ def test_send_email_raises_when_login_fails(monkeypatch):
     monkeypatch.setattr(smtplib, "SMTP_SSL", Bad)
     with pytest.raises(smtplib.SMTPAuthenticationError):
         send_email("s", "<p>x</p>", CFG, "wrong")
+
+
+def test_send_email_requires_recipient():
+    cfg = {"email": {"to": "", "from": "", "smtp_host": "smtp.qq.com", "smtp_port": 465}}
+    with pytest.raises(RuntimeError):
+        send_email("s", "<p>x</p>", cfg, "authcode")
+

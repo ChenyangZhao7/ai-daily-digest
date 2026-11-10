@@ -1,4 +1,4 @@
-# AI 日报邮件 · 实施计划
+﻿# AI 日报邮件 · 实施计划
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -978,3 +978,4 @@ git commit -m "ci: add daily, snapshot, and keepalive workflows"
 - [ ] **Step 7:** 去 DeepSeek 后台重新生成一次 API key（旧 key 已在对话中暴露），更新 Secret。
 
 **验收标准：** 连续 2 天自动收到邮件；某天故意把 Secret 改错时应收到 GitHub 的失败通知；周末邮件仍能收到（资讯为主，论文可能为 0）。
+

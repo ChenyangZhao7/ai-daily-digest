@@ -63,8 +63,8 @@ DEFAULTS: dict[str, Any] = {
         "timeout": 30,
     },
     "email": {
-        "to": "your-email@example.com",
-        "from": "your-email@example.com",
+        "to": "",
+        "from": "",
         "smtp_host": "smtp.qq.com",
         "smtp_port": 465,
     },

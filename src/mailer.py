@@ -12,6 +12,8 @@ def send_email(
     if not password:
         raise RuntimeError("QQ_SMTP_AUTH_CODE is not set")
     email_cfg = cfg["email"]
+    if not email_cfg.get("to") or not email_cfg.get("from"):
+        raise RuntimeError("MAIL_TO / MAIL_FROM are not configured")
 
     message = EmailMessage()
     message["Subject"] = subject

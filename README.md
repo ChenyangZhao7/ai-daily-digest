@@ -33,8 +33,8 @@ python -m pytest -q
 3. 仓库 Settings → Secrets and variables → Actions，添加：
    - `DEEPSEEK_API_KEY`
    - `QQ_SMTP_AUTH_CODE`
-
-   可选：`MAIL_TO`、`MAIL_FROM`（默认都是 `your-email@example.com`）。
+   - `MAIL_TO`：收件邮箱
+   - `MAIL_FROM`：发件邮箱（必须与 SMTP 登录账号一致）
 4. QQ 邮箱 → 设置 → 账户 → 开启「POP3/SMTP 服务」→ 生成 16 位授权码，填入 `QQ_SMTP_AUTH_CODE`。授权码不是登录密码。
 5. Actions → daily-digest → Run workflow，确认收到邮件。
 
