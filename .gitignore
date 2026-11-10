@@ -1,0 +1,7 @@
+.env
+*.local.yaml
+__pycache__/
+*.pyc
+.pytest_cache/
+.superpowers/
+tests/fixtures/raw/

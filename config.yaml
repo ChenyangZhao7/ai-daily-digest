@@ -1,0 +1,33 @@
+timezone: Asia/Shanghai
+limits:
+  max_papers: 6
+  max_news: 8
+  max_candidates: 40
+  score_threshold: 4
+  relax_score: 3
+  relax_min: 3
+windows:
+  paper_hours: 72
+  news_hours: 24
+sources:
+  arxiv:
+    enabled: true
+    categories: [cs.AI, cs.LG, cs.CL]
+    max_candidates: 20
+  hf:
+    enabled: true
+    max_candidates: 10
+  rss:
+    - {name: qbitai, url: "https://www.qbitai.com/feed", enabled: true, max_candidates: 5}
+    - {name: jiqizhixin, url: "https://www.jiqizhixin.com/rss", enabled: true, max_candidates: 5}
+    - {name: 36kr, url: "https://www.36kr.com/feed", enabled: true, max_candidates: 5,
+       keywords: [AI, 人工智能, 大模型, LLM, Agent, 智能体, 算力, GPU, 推理, 训练]}
+llm:
+  base_url: "https://api.deepseek.com"
+  model: deepseek-chat
+  timeout: 30
+email:
+  to: "your-email@example.com"
+  from: "your-email@example.com"
+  smtp_host: smtp.qq.com
+  smtp_port: 465
