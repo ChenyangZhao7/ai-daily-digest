@@ -21,7 +21,7 @@ python -m pytest -q
 
 ## 部署（约 5 分钟）
 
-1. 在 GitHub 新建**私有**仓库 `ai-daily-digest`（不要勾选 README / .gitignore）。
+1. 在 GitHub 新建仓库 `ai-daily-digest`（公开或私有均可；不要勾选 README / .gitignore）。
 2. 本地推送：
 
    ```bash

@@ -34,7 +34,7 @@
 
 | 约束 | 影响 |
 |---|---|
-| 开发机（Windows，Z:\AI-news）直连 arXiv、HuggingFace、Google 全部超时；仅国内源与 GitHub 可通 | 抓取逻辑必须在 GitHub Actions（海外）验证；本地只能用离线 fixture 做单测 |
+| 开发机（Windows）直连 arXiv、HuggingFace、Google 全部超时；仅国内源与 GitHub 可通 | 抓取逻辑必须在 GitHub Actions（海外）验证；本地只能用离线 fixture 做单测 |
 | 用户要求"轻量化" | 单仓库、单次定时任务、无数据库、无服务端 |
 | 用户已提供 DeepSeek API key 与 QQ 邮箱 | 摘要用 DeepSeek；发信走 smtp.qq.com |
 | QQ 邮箱要求授权码而非密码 | 授权码由用户生成，仅存 GitHub Secrets |
@@ -44,7 +44,7 @@
 ## 4. 方案比较（已在对话中由用户选定）
 
 **方案 1 · GitHub Actions（选定）**
-私有仓库 + cron 触发 + Python 脚本。免费额度：私有仓库 2000 分钟/月，本任务每天 1–2 分钟。海外 runner 直连 arXiv/HF。密钥存 GitHub Secrets。代价：需要一次性配置 10 分钟；cron 可能有几分钟延迟。
+仓库 + cron 触发 + Python 脚本。Actions 免费额度：公开仓库免费，私有仓库 2000 分钟/月；本任务每天 1–2 分钟。海外 runner 直连 arXiv/HF。密钥存 GitHub Secrets。代价：需要一次性配置 10 分钟；cron 可能有几分钟延迟。
 
 **方案 2 · 本机 Windows 任务计划**
 不需要 GitHub，但电脑必须常开、arXiv 必须挂代理。用户本机当前代理未运行，arXiv 不可达 → 排除。
@@ -148,7 +148,7 @@ LLM 按以下顺序判断，输出 score 1–5：
 ## 6. 仓库结构
 
 ```
-Z:\AI-news\
+ai-daily-digest\
 ├─ .github/workflows/daily.yml     # cron + workflow_dispatch
 ├─ .github/workflows/snapshot.yml  # 手动抓真实响应，产出 fixture
 ├─ .github/workflows/keepalive.yml # 每月提交一次，防止定时任务被停用
@@ -204,7 +204,7 @@ Z:\AI-news\
 
 ## 10. 成本与限制
 
-- GitHub Actions：每天 1–2 分钟，月耗 < 60 分钟（免费额度 2000 分钟/月）。
+- GitHub Actions：每天 1–2 分钟，月耗 < 60 分钟（公开仓库免费；私有仓库 2000 分钟/月）。
 - DeepSeek：每天 1–2 次调用，约 8k 输入 / 1k 输出，**每天 0.01–0.03 元**，每月 < 1 元。
 - 仓库：< 1 MB。
 - 已知限制：cron 触发可能延迟数分钟；arXiv 偶发 5xx 需靠重试；HF Daily Papers 榜单每天更新一次，可能与 arXiv 论文重复（已由去重处理）。
@@ -218,13 +218,13 @@ Z:\AI-news\
 5. 邮箱：QQ 邮箱，发件与收件同为 `your-email@example.com`。
 6. 内容偏好：**大模型 / Agent 为主，架构为主，高度技术化**（打分标准见 5.3）。
 7. 重复：接受重复，同一篇最多 5 次；72h 窗口下实际上限 3 次，不做状态文件。
-8. GitHub 账号：`ChenyangZhao7`；仓库由用户本人创建（私有），密钥由用户填入 Secrets。
+8. GitHub 账号：`ChenyangZhao7`；仓库由用户本人创建，密钥由用户填入 Secrets。
 
 ## 12. 执行分工（部署）
 
-代码、测试、workflow 文件由我在本地 `Z:\AI-news` 完成并 `git init`；以下步骤由用户执行（约 5 分钟，我会给出逐条命令）：
+代码、测试、workflow 文件在本地完成并 `git init`；以下步骤由用户执行（约 5 分钟，我会给出逐条命令）：
 
-1. 在 GitHub 新建私有仓库 `ai-daily-digest`（不要勾选 README）。
+1. 在 GitHub 新建仓库 `ai-daily-digest`（不要勾选 README）。
 2. 本地添加 remote 并 `git push`。
 3. 在 Settings → Secrets and variables → Actions 添加 `DEEPSEEK_API_KEY`、`QQ_SMTP_AUTH_CODE`。
 4. 去 QQ 邮箱设置 → 账户 → 开启 SMTP 服务，生成授权码（16 位），填入上一步。

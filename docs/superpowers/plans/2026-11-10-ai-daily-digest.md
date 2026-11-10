@@ -949,7 +949,7 @@ Expected: FAIL（`FileNotFoundError`）
 
 `keepalive.yml`：`schedule` 为 `0 0 1 * *`，`contents: write`，checkout 后 `echo $(date -u +%F) > .keepalive && git commit -am "chore: keepalive" && git push`。
 
-`README.md`：写清 5 步部署（建私有仓库、push、加 2 个 Secrets、QQ 邮箱开 SMTP 拿授权码、手动 Run workflow）、本地跑测试的方式、如何改源和条数、常见问题（为什么周六论文少、为什么某天没收到）。
+`README.md`：写清 5 步部署（建仓库、push、加 2 个 Secrets、QQ 邮箱开 SMTP 拿授权码、手动 Run workflow）、本地跑测试的方式、如何改源和条数、常见问题（为什么周六论文少、为什么某天没收到）。
 
 - [ ] **Step 4: 运行测试，确认通过**
 
@@ -969,13 +969,13 @@ git commit -m "ci: add daily, snapshot, and keepalive workflows"
 
 **Files:** 无
 
-- [ ] **Step 1:** 在 GitHub 新建私有仓库 `ai-daily-digest`（不勾 README）。
+- [ ] **Step 1:** 在 GitHub 新建仓库 `ai-daily-digest`（不勾 README）。
 - [ ] **Step 2:** 本地 `git remote add origin <repo-url> && git branch -M main && git push -u origin main`。
 - [ ] **Step 3:** Settings → Secrets and variables → Actions：添加 `DEEPSEEK_API_KEY`、`QQ_SMTP_AUTH_CODE`。
 - [ ] **Step 4:** QQ 邮箱 → 设置 → 账户 → 开启 SMTP → 生成 16 位授权码 → 填入 Step 3。
 - [ ] **Step 5:** Actions → daily-digest → Run workflow；确认 1 分钟内收到邮件，且邮件正文里的链接可点、中文正常。
 - [ ] **Step 6:** 当晚不用管，次日 08:30 后确认自动触发（Actions 显示由 `schedule` 触发，而非手动）。
-- [ ] **Step 7:** 去 DeepSeek 后台重新生成一次 API key（旧 key 已在对话中暴露），更新 Secret。
+- [ ] **Step 7:** 去 DeepSeek 后台生成或轮换 API key，更新 Secret。
 
 **验收标准：** 连续 2 天自动收到邮件；某天故意把 Secret 改错时应收到 GitHub 的失败通知；周末邮件仍能收到（资讯为主，论文可能为 0）。
 
