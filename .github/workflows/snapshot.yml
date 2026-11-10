@@ -1,0 +1,29 @@
+name: snapshot-fixtures
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch raw responses
+        run: |
+          mkdir -p tests/fixtures/raw
+          curl -sSL -o tests/fixtures/raw/arxiv.xml "https://export.arxiv.org/api/query?search_query=cat:cs.AI&max_results=5"
+          curl -sSL -o tests/fixtures/raw/hf.json "https://huggingface.co/api/daily_papers?limit=20"
+          curl -sSL -o tests/fixtures/raw/qbitai.xml "https://www.qbitai.com/feed"
+          curl -sSL -o tests/fixtures/raw/jiqizhixin.xml "https://www.jiqizhixin.com/rss"
+          curl -sSL -o tests/fixtures/raw/36kr.xml "https://www.36kr.com/feed"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fixtures
+          path: tests/fixtures/raw/
+          retention-days: 7
