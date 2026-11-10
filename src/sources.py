@@ -2,9 +2,13 @@ from __future__ import annotations
 
 import feedparser  # noqa: E402
 import html
+import json
+import time
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
+
+import requests
 
 from .models import Item, make_id, to_utc
 
@@ -145,3 +149,64 @@ def parse_rss(
             )
         )
     return items
+
+HEADERS = {"User-Agent": "ai-daily-digest/1.0"}
+
+
+def fetch_text(url: str, timeout: int = 10) -> str:
+    last_error: Exception | None = None
+    for attempt in range(2):
+        try:
+            resp = requests.get(url, timeout=timeout, headers=HEADERS)
+            resp.raise_for_status()
+            return resp.text
+        except Exception as exc:  # noqa: BLE001
+            last_error = exc
+            if attempt == 0:
+                time.sleep(1)
+    raise RuntimeError(str(last_error))
+
+
+def fetch_json(url: str, timeout: int = 10) -> list:
+    return json.loads(fetch_text(url, timeout=timeout))
+
+
+def fetch_all(
+    cfg: dict, now: datetime, *, text=None, js=None
+) -> tuple[list[Item], list[str]]:
+    text = text or fetch_text
+    js = js or fetch_json
+    sources = cfg["sources"]
+    items: list[Item] = []
+    errors: list[str] = []
+
+    arxiv = sources.get("arxiv") or {}
+    if arxiv.get("enabled", True):
+        try:
+            url = build_arxiv_url(
+                arxiv["categories"],
+                now - timedelta(hours=72),
+                now,
+                arxiv["max_candidates"] * 3,
+            )
+            items.extend(parse_arxiv(text(url)))
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"arxiv: {exc}")
+
+    hf = sources.get("hf") or {}
+    if hf.get("enabled", True):
+        try:
+            payload = js("https://huggingface.co/api/daily_papers?limit=50")
+            items.extend(parse_hf(payload))
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"hf: {exc}")
+
+    for rss in sources.get("rss", []):
+        if not rss.get("enabled", True):
+            continue
+        try:
+            items.extend(parse_rss(rss["name"], text(rss["url"]), rss.get("keywords")))
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{rss['name']}: {exc}")
+
+    return items, errors
