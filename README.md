@@ -1,28 +1,30 @@
-# AI 日报
+# AI Daily Digest
 
-每天早上 08:30（北京时间）把当天值得看的 AI 论文与资讯，加上一句中文说明，发到邮箱。
+**English** | [中文](README.zh-CN.md)
 
-- 论文来源：arXiv（cs.AI / cs.LG / cs.CL）、HuggingFace Daily Papers
-- 资讯来源：量子位、机器之心、36氪（AI 关键词过滤）
-- 打分：DeepSeek，只收 4 分以上，最多 6 篇论文 + 8 条资讯
-- 运行：GitHub Actions 定时任务，不需要自己的服务器
+Every morning at 08:30 Beijing time, the day's AI papers and news worth reading arrive in your inbox, each with a one-line Chinese summary.
 
-设计文档：`docs/superpowers/specs/2026-11-10-ai-daily-digest-design.md`
-实施计划：`docs/superpowers/plans/2026-11-10-ai-daily-digest.md`
+- Papers: arXiv (cs.AI / cs.LG / cs.CL) and HuggingFace Daily Papers
+- News: 量子位, 机器之心 and 36氪, filtered by AI keywords
+- Scoring: DeepSeek; only items scoring 4 or above are kept, at most 6 papers + 8 news items
+- Runs as a GitHub Actions schedule; you do not need a server
 
-## 本地开发
+Design doc: `docs/superpowers/specs/2026-11-10-ai-daily-digest-design.md`
+Implementation plan: `docs/superpowers/plans/2026-11-10-ai-daily-digest.md`
+
+## Local development
 
 ```bash
 python -m pip install -r requirements.txt
 python -m pytest -q
 ```
 
-测试全部离线，不访问网络。
+All tests run offline and never touch the network.
 
-## 部署（约 5 分钟）
+## Deployment (about five minutes)
 
-1. 在 GitHub 新建仓库 `ai-daily-digest`（公开或私有均可；不要勾选 README / .gitignore）。
-2. 本地推送：
+1. Create a repository on GitHub named `ai-daily-digest` (public or private; do not initialise it with a README or .gitignore).
+2. Push from your machine:
 
    ```bash
    git remote add origin https://github.com/ChenyangZhao7/ai-daily-digest.git
@@ -30,39 +32,43 @@ python -m pytest -q
    git push -u origin main
    ```
 
-3. 仓库 Settings → Secrets and variables → Actions，添加：
+3. Repository Settings → Secrets and variables → Actions, add:
    - `DEEPSEEK_API_KEY`
    - `QQ_SMTP_AUTH_CODE`
-   - `MAIL_TO`：收件邮箱
-   - `MAIL_FROM`：发件邮箱（必须与 SMTP 登录账号一致）
-4. QQ 邮箱 → 设置 → 账户 → 开启「POP3/SMTP 服务」→ 生成 16 位授权码，填入 `QQ_SMTP_AUTH_CODE`。授权码不是登录密码。
-5. Actions → daily-digest → Run workflow，确认收到邮件。
+   - `MAIL_TO`: the receiving address
+   - `MAIL_FROM`: the sending address (must match the SMTP login account)
+4. QQ Mail → Settings → Account → enable POP3/SMTP → generate a 16-character auth code and put it in `QQ_SMTP_AUTH_CODE`. This code is not your login password.
+5. Actions → daily-digest → Run workflow, then confirm the mail arrives.
 
-之后再改配置只需改 `config.yaml` 并 push。
+After that, change configuration by editing `config.yaml` and pushing.
 
-## 配置
+## Configuration
 
-`config.yaml`：
+`config.yaml`:
 
-| 字段 | 含义 |
+| Field | Meaning |
 |---|---|
-| `limits.max_papers` / `max_news` | 每封邮件最多几篇论文 / 几条资讯 |
-| `limits.score_threshold` | 入选分数线（默认 4） |
-| `sources.arxiv.categories` | 要抓的 arXiv 分类 |
-| `sources.rss` | 资讯源列表；`keywords` 非空时按关键词过滤 |
-| `llm.model` | DeepSeek 模型名 |
+| `limits.max_papers` / `max_news` | Maximum papers / news items per email |
+| `limits.score_threshold` | Cut-off score (default 4) |
+| `sources.arxiv.categories` | arXiv categories to crawl |
+| `sources.rss` | News sources; when `keywords` is non-empty, items are filtered by it |
+| `llm.model` | DeepSeek model name |
 
-## 常见问题
+## FAQ
 
-**周六/周日论文很少？** arXiv 周末不发布新论文，窗口虽是 72 小时，但周末的邮件基本只有资讯。周一会自动带回周五的论文。
+**Very few papers on Saturday and Sunday?** arXiv publishes nothing at the weekend. The window is still 72 hours, but weekend emails are mostly news. Monday's run brings back Friday's papers automatically.
 
-**某天没收到邮件？** 依次看：Actions 是否被禁用（仓库 60 天无活动会被 GitHub 停用，`keepalive.yml` 每月会提交一次来避免）；Actions 运行日志是否报错；垃圾邮件箱。
+**No email one day?** Check in order: whether Actions is disabled (GitHub disables scheduled workflows after 60 days of inactivity; `keepalive.yml` commits once a month to prevent this), whether the Actions log reports an error, then the spam folder.
 
-**抓取全部失败怎么办？** 会收到一封标题含「今日抓取失败」的告警邮件，里面列出每个源的错误。
+**Every source failed?** You get an alert email titled "今日抓取失败" listing the error for each source.
 
-**摘要出错了？** 邮件仍会发出，只是打分为空，标题会标注「未生成摘要」。
+**Summaries failed?** The email is still sent; the score is simply empty and the subject says "未生成摘要".
 
-## 安全
+## Security
 
-- 密钥只存在 GitHub Secrets，仓库与日志里没有明文。
-- 邮件里所有外部内容都做了 HTML 转义。
+- Keys live only in GitHub Secrets; nothing plaintext is in the repository or the logs.
+- All external content in the email is HTML-escaped.
+
+## License
+
+MIT
